@@ -1,6 +1,4 @@
-# The work of *advance computer network*
-
-内容：
+# *advanced computer network* coursework
 
 1. Client/Server双向收发消息
     - 功能：
