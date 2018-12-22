@@ -56,10 +56,11 @@ void *SubThread(void *sfd)
 			//break;
 		}
 		else{	/*read success*/			
-			char file[128];  
+			char file[128];
+			char method[10];
 			/*Get request filename*/
-			sscanf(buff,"%*s %s %*s",file);
-			printf("%s:%u %d GET %s\n", inet_ntoa(cliAddr.sin_addr), ntohs(cliAddr.sin_port),n, file);
+			sscanf(buff,"%s %s %*s",method, file);
+			printf("%s:%u %d %s %s\n", inet_ntoa(cliAddr.sin_addr), ntohs(cliAddr.sin_port),n,method,file);
 			if(file[strlen(file)-1]=='/')	/*Set default file when requesting directory*/
 				strcat(file,"index.html");
 			int usedbuflen = 0;
@@ -82,18 +83,23 @@ void *SubThread(void *sfd)
 				}
 				usedbuflen += sprintf(buff+usedbuflen,"Content-Length: %d\r\n\r\n",length);
 				/*Read and send file content*/
-				do{
-					int rdfilelen = read(fd,buff+usedbuflen,MTU-usedbuflen);
-					if(rdfilelen<=0){
-						break;
-					}else{
-						usedbuflen += rdfilelen;
-						write(connfd,buff,usedbuflen);
-						usedbuflen = 0;
-					}					
-				}while(1);
+				if(strncmp("HEAD",method,8)==0){
+					write(connfd,buff,usedbuflen);
+				}else if(strncmp("GET",method,8)==0){
+					do{
+						int rdfilelen = read(fd,buff+usedbuflen,MTU-usedbuflen);
+						if(rdfilelen<=0){
+							break;
+						}else{
+							usedbuflen += rdfilelen;
+							write(connfd,buff,usedbuflen);
+							usedbuflen = 0;
+						}					
+					}while(1);
+				}
+				
 			}
-			close(fd);			
+			close(fd);
 		}
 		close(connfd);	
 	//}
